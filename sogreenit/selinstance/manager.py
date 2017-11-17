@@ -4,7 +4,7 @@ from selenium import webdriver
 from task import Task
 
 class Manager:
-    def __init__(self, host_hub, hub_port, node_port):
+    def __init__(self, host_hub, hub_port, node_port, log_dir_path):
         profile = webdriver.FirefoxProfile()
 
         profile.set_preference('app.update.enabled', 0)
@@ -26,6 +26,9 @@ class Manager:
         profile.set_preference('browser.cache.offline.enable', 0)
         profile.set_preference('browser.cache.use_new_backend', 0)
         profile.set_preference('browser.cache.use_new_backend_temp', 0)
+        profile.set_preference('devtools.netmonitor.har.defaultLogDir', log_dir_path)
+        profile.set_preference('devtools.netmonitor.har.enableAutoExportToFile', 1)
+        profile.set_preference('devtools.netmonitor.har.forceExport', 1)
         profile.set_preference('dom.caches.enabled', 0)
         profile.set_preference('dom.requestcache.enabled', 0)
         profile.set_preference('image.cache.size', 0)
@@ -44,10 +47,8 @@ class Manager:
             browser_profile=profile
         )
         self.__browser.implicitly_wait(2)
-        self.__browser.find_element.by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'k')
-    
+        self.__browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'k')
+
     def launch_task(self, task):
         if not isinstance(task, Task):
             return False
-
-        
