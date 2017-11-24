@@ -8,7 +8,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'flask>=0.12.2',
-        'selenium>=3.7.0'
+        'selenium>=3.7.0',
+        'celery>=4.1.0'
     ],
     author='Romain Failla',
     author_email='rigbuntu@gmail.com',
