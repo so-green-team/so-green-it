@@ -4,6 +4,10 @@ from selenium import webdriver
 from task import Task
 
 class Manager:
+    """
+    This class manages a waiting queue of tasks to manage
+    """
+
     def __init__(self, host_hub, hub_port, node_port, log_dir_path):
         profile = webdriver.FirefoxProfile()
 
@@ -49,6 +53,4 @@ class Manager:
         self.__browser.implicitly_wait(2)
         self.__browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'k')
 
-    def launch_task(self, task):
-        if not isinstance(task, Task):
-            return False
+        self.__queue = []

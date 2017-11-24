@@ -1,6 +1,10 @@
-import time
+from time import time
 
 class Task:
+    """
+    Represent as task to be handled by so-green-it
+    """
+
     PENDING = 0
     RUNNING = 1
     DONE = 2
@@ -9,15 +13,7 @@ class Task:
     def __init__(self, id, test):
         self.status = Task.PENDING
         self.id = id
-        self.timestamp = time.time()
+        self.created = time()
+        self.completed = None
         self.result = None
         self.__test = test
-
-    def start(self, url):
-        self.status = Task.RUNNING
-        self.result = self.__test(url)
-
-        if isinstance(self.result, bool) and not self.result:
-            self.status = Task.FAILED
-        else:
-            self.status = Task.DONE
