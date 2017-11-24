@@ -3,6 +3,9 @@
 
 from flask import Flask
 from celery import Celery
+from threading import Thread
+
+from selinstance.manager import Manager
 
 def make_celery(app):
     celery = Celery(
@@ -33,7 +36,13 @@ app.config.update(
     VERSION_MAJOR=0,
     VERSION_MINOR=2
 )
+celery = make_celery(app)
+
+# Will not work for now because we do not have decided how many manager we need to allocate
+manager = Manager()
+
+thread = Thread(target=manager.manage_analysis_tasks())
+thread.start()
 
 import sogreenit.scan
 import sogreenit.results
-
