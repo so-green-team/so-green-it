@@ -7,7 +7,9 @@ setup(
     packages=['sogreenit'],
     include_package_data=True,
     install_requires=[
-        'flask>=0.12.2'
+        'flask>=0.12.2',
+        'selenium',
+        'psutil>=5.4.1'
     ],
     author='Romain Failla',
     author_email='rigbuntu@gmail.com',
