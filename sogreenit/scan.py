@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
 from flask import request, jsonify
+
 from sogreenit import app
+from db.manager import DBConnection
 
 # Setting browser profile
 profile = webdriver.FirefoxProfile()
@@ -46,6 +50,9 @@ browser = webdriver.Remote(
 )
 browser.implicitly_wait(2)
 browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'K')
+
+# DB connection
+db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
 
 @app.route('/scan', methods=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'])
 def scan_help():

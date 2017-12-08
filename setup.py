@@ -9,7 +9,9 @@ setup(
     install_requires=[
         'flask>=0.12.2',
         'selenium',
-        'psutil>=5.4.1'
+        'psutil>=5.4.1',
+        'psycopg2>=2.7',
+        'mysqlclient>=1.3'
     ],
     author='Romain Failla',
     author_email='rigbuntu@gmail.com',
