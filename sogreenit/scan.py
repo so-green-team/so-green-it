@@ -7,9 +7,10 @@ import os
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
 from flask import request, jsonify
+from jsonschema import ValidationError, validate
 
 from sogreenit.db.manager import DBConnection
-from sogreenit import app
+from sogreenit import app, input_schema
 
 # Setting browser profile
 profile = webdriver.FirefoxProfile()
@@ -84,6 +85,11 @@ def scan_static():
 
     # Retrieving user parameters
     user_params = request.get_json()
+
+    try:
+        validate(user_params, input_schema)
+    except ValidationError as err:
+        raise err
 
     # Loading input URL
     browser.get(user_params['url'])

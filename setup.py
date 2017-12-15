@@ -10,6 +10,7 @@ setup(
         'flask>=0.12.2',
         'selenium',
         'psutil>=5.4.1',
+        'jsonschema>=2.6.0',
         'psycopg2>=2.7',
         'mysqlclient>=1.3'
     ],
