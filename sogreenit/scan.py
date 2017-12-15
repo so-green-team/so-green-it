@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
+import json
 import os
 
 from selenium.webdriver.common.keys import Keys
 from selenium import webdriver
 from flask import request, jsonify
 
+from sogreenit.db.manager import DBConnection
 from sogreenit import app
-from db.manager import DBConnection
 
 # Setting browser profile
 profile = webdriver.FirefoxProfile()
@@ -30,7 +32,7 @@ profile.set_preference('browser.cache.memory.max_entry_size', 0)
 profile.set_preference('browser.cache.offline.enable', 0)
 profile.set_preference('browser.cache.use_new_backend', 0)
 profile.set_preference('browser.cache.use_new_backend_temp', 0)
-profile.set_preference('devtools.netmonitor.har.defaultLogDir', '')
+profile.set_preference('devtools.netmonitor.har.defaultLogDir', '/var/sogreenit/har')
 profile.set_preference('devtools.netmonitor.har.enableAutoExportToFile', 1)
 profile.set_preference('devtools.netmonitor.har.forceExport', 1)
 profile.set_preference('dom.caches.enabled', 0)
@@ -85,6 +87,18 @@ def scan_static():
 
     # Loading input URL
     browser.get(user_params['url'])
+
+    # Opening HAR archive and parsing it
+    d = datetime.today()
+    har = None
+    with open('/var/sogreenit/har/Archive {}'.format(d.strftime('%Y-%M-d %I-%m-%S'))) as f:
+        har = json.load(f)
+
+    # Retrieving DOM from the page
+    dom = browser.find_element_by_tag_name('html')
+
+    # Retrieving CPU informations
+    cpu = None # TODO
 
 @app.route('/scan/app', methods=['POST'])
 def scan_app():
