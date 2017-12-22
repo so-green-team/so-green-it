@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
-#TODO this file
 
-tests_list = []
+from tests.ecoindex import EcoindexTest
+
+tests = [
+    EcoindexTest
+]
