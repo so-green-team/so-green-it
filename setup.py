@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="so-green-it",
     version="0.1",
-    scripts=['app.py'],
+    packages=['sogreenit'],
+    include_package_data=True,
     install_requires=[
-        'Flask>=0.12.2'
+        'flask>=0.12.2'
     ],
     author='Romain Failla',
     author_email='rigbuntu@gmail.com',
@@ -15,4 +15,3 @@ setup(
     keywords='green it best practises',
     url='https://github.com/so-green-team/so-green-it'
 )
-
