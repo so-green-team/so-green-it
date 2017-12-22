@@ -6,8 +6,18 @@ class Ecoindex(Test):
     def __init__(self):
         tests_list.append("Ecoindex")
 
+    def compute_dom_size(dom):
+        elements = dom.find_elements()
+
+        if len(elements) == 0:
+            return 1
+        else:
+            size = 1
+            for el in elements:
+                size += compute_dom_size(el)
+            return size
+
     def run(har, dom, cpu, mem):
-        #TODO reimplement the calculate_ecoIndex function
 
         #param har is a dictionary with the content of the har file
         countRequest = 0
@@ -17,25 +27,26 @@ class Ecoindex(Test):
         for entry in log['entries']:
             totalSize += entry['response']['headersSize'] + entry['response']['bodySize']
         #param dom is the information about the size of the dom
-
-        #param cpu is the information about the utilisation of the cpu
-        #param mem is the information about the utilisation of the memory
+        domSize = compute_dom_size(dom)
 
         #calculate the ecoindex
+        #coeficient used for the computation
         coef_dom = 3
-        coef_poids = 1
+        coef_weight = 1
         coef_req = 2
 
         #TODO fetch the average in the sql
-        average_dom = 0
-        average_poids = 0
-        average_nbr_req = 0
+        average_dom = 1
+        average_weight = 1
+        average_nbr_req = 1
 
-        ecart_dom = (domSize / average_dom) * coef_dom
-        ecart_poids = (totalSize / average_poids) * coef_poids
-        ecart_req = (countRequest / average_nbr_req) * coef_req
-        ecoIndex = (ecart_dom + ecart_poids + ecart_req) / (coef_dom + coef_poids + coef_req)
+        #compute the difference between the averages and this analyse
+        dom_gap = (domSize / average_dom) * coef_dom
+        weight_gap = (totalSize / average_weight) * coef_weight
+        req_gap = (countRequest / average_nbr_req) * coef_req
+        ecoIndex = (dom_gap + weight_gap + req_gap) / (coef_dom + coef_weight + coef_req)
 
+        #attribution of a note depending of the result of ecoIndex
         note = ""
         if ecoIndex < 0.2:
             note = "A"
@@ -51,3 +62,5 @@ class Ecoindex(Test):
             note = "F"
         else:
             note = "G"
+
+        return note
