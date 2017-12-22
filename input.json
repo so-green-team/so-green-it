@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "id": "http://sogree.it/schemas/input.json",
+    "id": "http://sogreen.it/schemas/input.json",
     "description": "User input for API call",
     "type": "object",
     "required": ["url"],
