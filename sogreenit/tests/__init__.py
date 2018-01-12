@@ -3,6 +3,4 @@
 from tests.ecoindex import EcoindexTest
 
 ecoindex = EcoindexTest
-tests = [
-    EcoindexTest
-]
+tests = []

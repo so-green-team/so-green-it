@@ -113,10 +113,24 @@ def scan_static():
     # Computing Ecoindex grade
     grade = ecoindex.run(har, dom, cpu, mem)
 
+    # Computing tests
+    rules_set = None
+    results = {}
+
+    if user_params['includeRules'] == []:
+        rules_set = range(len(tests))
+    else:
+        rules_set = user_params['includeRules']
+
+    for rule_id in rules_set:
+        if rule_id not in user_params['excludeRules']:
+            results[rule_id] = tests[rule_id].run(har, dom, cpu, mem)
+
     # Returning the result of the scan
     return jsonify({
         'url': user_params['url'],
-        'ecoindex': grade
+        'ecoindex': grade,
+        'results': results
     })
 
 @app.route('/scan/app', methods=['POST'])
