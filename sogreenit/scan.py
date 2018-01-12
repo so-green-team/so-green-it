@@ -10,6 +10,7 @@ from flask import request, jsonify
 from jsonschema import ValidationError, validate
 
 from sogreenit.db.manager import DBConnection
+from sogreenit.tests import tests, ecoindex
 from sogreenit import app, input_schema
 
 # Setting browser profile
@@ -55,7 +56,7 @@ browser.implicitly_wait(2)
 browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'K')
 
 # DB connection
-db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
+# db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
 
 @app.route('/scan', methods=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'])
 def scan_help():
@@ -105,6 +106,18 @@ def scan_static():
 
     # Retrieving CPU informations
     cpu = None # TODO
+
+    # Retrieving memory informations
+    mem = None
+
+    # Computing Ecoindex grade
+    grade = ecoindex.run(har, dom, cpu, mem)
+
+    # Returning the result of the scan
+    return jsonify({
+        'url': user_params['url'],
+        'ecoindex': grade
+    })
 
 @app.route('/scan/app', methods=['POST'])
 def scan_app():
