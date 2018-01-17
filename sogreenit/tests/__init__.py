@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from tests.ecoindex import EcoindexTest
+from sogreenit.tests.ecoindex import EcoindexTest
 
 ecoindex = EcoindexTest
 tests = []

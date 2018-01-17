@@ -1,6 +1,6 @@
 #TODO child class from test using arguments har, cpu and mem to calculate the ecoindex
 
-from tests.test import Test
+from sogreenit.tests.test import Test
 
 class EcoindexTest(Test):
     def compute_dom_size(self, dom):

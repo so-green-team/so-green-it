@@ -4,56 +4,69 @@ from datetime import datetime
 import json
 import os
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
 from selenium import webdriver
-from flask import request, jsonify
+
 from jsonschema import ValidationError, validate
+from flask import request, jsonify
 
 from sogreenit.db.manager import DBConnection
 from sogreenit.tests import tests, ecoindex
 from sogreenit import app, input_schema
 
+# Setting constant for loggin directory
+HAR_LOG_DIR = None
+if os.name == 'nt':
+    HAR_LOG_DIR = '{}\\logs'.format(os.getcwd())
+else:
+    HAR_LOG_DIR = '{}/logs'.format(os.getcwd())
+
 # Setting browser profile
 profile = webdriver.FirefoxProfile()
-profile.set_preference('app.update.enabled', 0)
-profile.set_preference('browser.cache.disk.enable', 0)
-profile.set_preference('browser.cache.disk.free_space_hard_limit', 0)
-profile.set_preference('browser.cache.disk.free_space_soft_limit', 0)
-profile.set_preference('browser.cache.disk.max_chunks_memory_usage', 0)
-profile.set_preference('browser.cache.disk.max_entry_size', 0)
-profile.set_preference('browser.cache.disk.max_priority_chunks_memory_usage', 0)
-profile.set_preference('browser.cache.disk.metadata_memory_limit', 0)
-profile.set_preference('browser.cache.disk.preload_chunk_count', 0)
-profile.set_preference('browser.cache.disk.smart_size.enabled', 0)
-profile.set_preference('browser.cache.disk.smart_size.first_run', 0)
-profile.set_preference('browser.cache.disk.smart_size_cached_value', 0)
-profile.set_preference('browser.cache.disk.smart_size.use_old_max', 0)
-profile.set_preference('browser.cache.disk_cache_ssl', 0)
-profile.set_preference('browser.cache.memory.enable', 0)
-profile.set_preference('browser.cache.memory.max_entry_size', 0)
-profile.set_preference('browser.cache.offline.enable', 0)
-profile.set_preference('browser.cache.use_new_backend', 0)
-profile.set_preference('browser.cache.use_new_backend_temp', 0)
-profile.set_preference('devtools.netmonitor.har.defaultLogDir', '/var/sogreenit/har')
-profile.set_preference('devtools.netmonitor.har.enableAutoExportToFile', 1)
-profile.set_preference('devtools.netmonitor.har.forceExport', 1)
-profile.set_preference('dom.caches.enabled', 0)
-profile.set_preference('dom.requestcache.enabled', 0)
-profile.set_preference('image.cache.size', 0)
-profile.set_preference('media.cache_size', 0)
+profile.set_preference('app.update.enabled', False)
+profile.set_preference('browser.cache.disk.enable', False)
+profile.set_preference('browser.cache.disk.free_space_hard_limit', False)
+profile.set_preference('browser.cache.disk.free_space_soft_limit', False)
+profile.set_preference('browser.cache.disk.max_chunks_memory_usage', False)
+profile.set_preference('browser.cache.disk.max_entry_size', False)
+profile.set_preference('browser.cache.disk.max_priority_chunks_memory_usage', False)
+profile.set_preference('browser.cache.disk.metadata_memory_limit', False)
+profile.set_preference('browser.cache.disk.preload_chunk_count', False)
+profile.set_preference('browser.cache.disk.smart_size.enabled', False)
+profile.set_preference('browser.cache.disk.smart_size.first_run', False)
+profile.set_preference('browser.cache.disk.smart_size_cached_value', False)
+profile.set_preference('browser.cache.disk.smart_size.use_old_max', False)
+profile.set_preference('browser.cache.disk_cache_ssl', False)
+profile.set_preference('browser.cache.memory.enable', False)
+profile.set_preference('browser.cache.memory.max_entry_size', False)
+profile.set_preference('browser.cache.offline.enable', False)
+profile.set_preference('browser.cache.use_new_backend', False)
+profile.set_preference('browser.cache.use_new_backend_temp', False)
+profile.set_preference('devtools.netmonitor.har.defaultLogDir', HAR_LOG_DIR)
+profile.set_preference('devtools.netmonitor.har.enableAutoExportToFile', True)
+profile.set_preference('devtools.netmonitor.har.forceExport', True)
+profile.set_preference('dom.caches.enabled', False)
+profile.set_preference('dom.requestcache.enabled', False)
+profile.set_preference('image.cache.size', False)
+profile.set_preference('media.cache_size', False)
 
 # Instantiate browser into memory
 browser = webdriver.Remote(
     command_executor='http://127.0.0.1:4444/wd/hub',
     desired_capabilities={
-        'applicationCacheEnabled': False,
+        'applicationCacheEnabled': False, # Subject to change: modern web application trends to use those functionalities
         'webStorageEnabled': False,
         'databaseEnabled': False
     },
     browser_profile=profile
 )
-browser.implicitly_wait(2)
-browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'K')
+browser.get('https://www.google.com')
+WebDriverWait(browser, 10).until(lambda driver: driver.find_element_by_tag_name('body')).send_keys(Keys.CONTROL + Keys.SHIFT + 'k'))
 
 # DB connection
 # db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
@@ -93,12 +106,24 @@ def scan_static():
         raise err
 
     # Loading input URL
+    browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'K')
     browser.get(user_params['url'])
+    try:
+        WebDriverWait(browser, 120).until(EC.presence_of_element_located((By.TAG_NAME, 'html')))
+    except TimeoutException as err:
+        raise err
 
     # Opening HAR archive and parsing it
-    d = datetime.today()
+    d = datetime.now()
+    path = None
     har = None
-    with open('/var/sogreenit/har/Archive {}'.format(d.strftime('%Y-%M-d %I-%m-%S'))) as f:
+
+    if os.name == 'nt':
+        path = '{}\\Archive {}'.format(HAR_LOG_DIR, d.strftime('%y-%m-%d %H-%M-%S'))
+    else:
+        path = '{}/Archive {}'.format(HAR_LOG_DIR, d.strftime('%y-%m-%d %H-%M-%S'))
+
+    with open(path) as f:
         har = json.load(f)
 
     # Retrieving DOM from the page
@@ -108,7 +133,7 @@ def scan_static():
     cpu = None # TODO
 
     # Retrieving memory informations
-    mem = None
+    mem = None # TODO
 
     # Computing Ecoindex grade
     grade = ecoindex.run(har, dom, cpu, mem)
