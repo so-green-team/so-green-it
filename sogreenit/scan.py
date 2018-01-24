@@ -55,19 +55,6 @@ profile.set_preference('dom.requestcache.enabled', False)
 profile.set_preference('image.cache.size', False)
 profile.set_preference('media.cache_size', False)
 
-# Instantiate browser into memory
-browser = webdriver.Remote(
-    command_executor='http://127.0.0.1:4444/wd/hub',
-    desired_capabilities={
-        'applicationCacheEnabled': False, # Subject to change: modern web application trends to use those functionalities
-        'webStorageEnabled': False,
-        'databaseEnabled': False
-    },
-    browser_profile=profile
-)
-browser.get('https://www.google.com')
-WebDriverWait(browser, 10).until(lambda driver: driver.find_element_by_tag_name('body')).send_keys(Keys.CONTROL + Keys.SHIFT + 'k'))
-
 # DB connection
 # db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
 
@@ -105,13 +92,29 @@ def scan_static():
     except ValidationError as err:
         raise err
 
+    # Instantiating browser
+    profile.set_preference('devtools.netmonitor.har.defaultFileName', '{}.archive'.format(user_params['url']))
+    
+    browser = webdriver.Remote(
+        command_executor='http://127.0.0.1:4444/wd/hub',
+        desired_capabilities={
+            'applicationCacheEnabled': False, # Subject to change: modern web application trends to use those functionalities
+            'webStorageEnabled': False,
+            'databaseEnabled': False
+        },
+        browser_profile=profile
+    )
+    ActionChains(browser).key_down(Keys.F12).key_up(Keys.F12).perform()
+
     # Loading input URL
-    browser.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.SHIFT + 'K')
-    browser.get(user_params['url'])
     try:
+        browser.get(user_params['url'])
         WebDriverWait(browser, 120).until(EC.presence_of_element_located((By.TAG_NAME, 'html')))
     except TimeoutException as err:
         raise err
+    
+    # Closing browser
+    browser.quit()
 
     # Opening HAR archive and parsing it
     d = datetime.now()
@@ -119,9 +122,9 @@ def scan_static():
     har = None
 
     if os.name == 'nt':
-        path = '{}\\Archive {}'.format(HAR_LOG_DIR, d.strftime('%y-%m-%d %H-%M-%S'))
+        path = '{}\\{}.archive.har'.format(HAR_LOG_DIR, user_params['url'])
     else:
-        path = '{}/Archive {}'.format(HAR_LOG_DIR, d.strftime('%y-%m-%d %H-%M-%S'))
+        path = '{}/{}.archive.har'.format(HAR_LOG_DIR, user_params['url'])
 
     with open(path) as f:
         har = json.load(f)
