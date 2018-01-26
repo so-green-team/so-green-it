@@ -13,18 +13,24 @@ from selenium.common.exceptions import TimeoutException
 from selenium import webdriver
 
 from jsonschema import ValidationError, validate
+from browsermobproxy import Server
 from flask import request, jsonify
 
 from sogreenit.db.manager import DBConnection
 from sogreenit.tests import tests, ecoindex
 from sogreenit import app, input_schema
 
-# Setting constant for loggin directory
-HAR_LOG_DIR = None
+# Starting BrowserMob Proxy server
+browsermob_server = None
+browsermob_proxy = None
+
 if os.name == 'nt':
-    HAR_LOG_DIR = '{}\\logs'.format(os.getcwd())
+    browsermob_server = Server('{}\\browsermob-proxy-2.1.4\\bin\\browsermob-proxy.bat'.format(os.getcwd()))
 else:
-    HAR_LOG_DIR = '{}/logs'.format(os.getcwd())
+    browsermob_server = Server('{}\\browsermob-proxy-2.1.4\\bin\\browsermob-proxy'.format(os.getcwd()))
+
+browsermob_server.start()
+browsermob_proxy = browsermob_server.create_proxy()
 
 # Setting browser profile
 profile = webdriver.FirefoxProfile()
@@ -47,13 +53,11 @@ profile.set_preference('browser.cache.memory.max_entry_size', False)
 profile.set_preference('browser.cache.offline.enable', False)
 profile.set_preference('browser.cache.use_new_backend', False)
 profile.set_preference('browser.cache.use_new_backend_temp', False)
-profile.set_preference('devtools.netmonitor.har.defaultLogDir', HAR_LOG_DIR)
-profile.set_preference('devtools.netmonitor.har.enableAutoExportToFile', True)
-profile.set_preference('devtools.netmonitor.har.forceExport', True)
 profile.set_preference('dom.caches.enabled', False)
 profile.set_preference('dom.requestcache.enabled', False)
 profile.set_preference('image.cache.size', False)
 profile.set_preference('media.cache_size', False)
+profile.set_proxy(browsermob_proxy.selenium_proxy())
 
 # DB connection
 # db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
@@ -93,9 +97,7 @@ def scan_static():
         raise err
 
     # Instantiating browser
-    profile.set_preference('devtools.netmonitor.har.defaultFileName', '{}.archive'.format(user_params['url']))
-    
-    browser = webdriver.Remote(
+    driver = webdriver.Remote(
         command_executor='http://127.0.0.1:4444/wd/hub',
         desired_capabilities={
             'applicationCacheEnabled': False, # Subject to change: modern web application trends to use those functionalities
@@ -104,33 +106,20 @@ def scan_static():
         },
         browser_profile=profile
     )
-    ActionChains(browser).key_down(Keys.F12).key_up(Keys.F12).perform()
 
     # Loading input URL
+    browsermob_proxy.new_har(title=user_params['url'])
+    driver.get(user_params['url'])
     try:
-        browser.get(user_params['url'])
-        WebDriverWait(browser, 120).until(EC.presence_of_element_located((By.TAG_NAME, 'html')))
+        WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.TAG_NAME, 'html')))
     except TimeoutException as err:
         raise err
     
-    # Closing browser
-    browser.quit()
-
-    # Opening HAR archive and parsing it
-    d = datetime.now()
-    path = None
-    har = None
-
-    if os.name == 'nt':
-        path = '{}\\{}.archive.har'.format(HAR_LOG_DIR, user_params['url'])
-    else:
-        path = '{}/{}.archive.har'.format(HAR_LOG_DIR, user_params['url'])
-
-    with open(path) as f:
-        har = json.load(f)
+    # Retrieving HAR content
+    har = browsermob_proxy.har
 
     # Retrieving DOM from the page
-    dom = browser.find_element_by_tag_name('html')
+    dom = driver.find_element_by_tag_name('html')
 
     # Retrieving CPU informations
     cpu = None # TODO
@@ -139,20 +128,35 @@ def scan_static():
     mem = None # TODO
 
     # Computing Ecoindex grade
-    grade = ecoindex.run(har, dom, cpu, mem)
+    grade = ecoindex.run(har=har, dom=dom, cpu=cpu, mem=mem)
 
-    # Computing tests
+    # Setting up rules testing environment
     rules_set = None
+    excluded_rules = None
     results = {}
 
-    if user_params['includeRules'] == []:
+    # Retrieving used rules
+    try:
+        if type(user_params['includeRules']) is list and len(user_params['includeRules']) > 0:
+            rules_set = user_params['includeRules']
+        else:
+            rules_set = range(len(tests))
+    except KeyError:
         rules_set = range(len(tests))
-    else:
-        rules_set = user_params['includeRules']
 
+    # Retrieving excluded rules
+    try:
+        excluded_rules = user_params['excludeRules']
+    except KeyError:
+        excluded_rules = []
+
+    # Computing tests
     for rule_id in rules_set:
         if rule_id not in user_params['excludeRules']:
             results[rule_id] = tests[rule_id].run(har, dom, cpu, mem)
+
+    # Closing browser
+    driver.quit()
 
     # Returning the result of the scan
     return jsonify({

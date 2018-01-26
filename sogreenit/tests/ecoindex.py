@@ -2,19 +2,19 @@
 
 from sogreenit.tests.test import Test
 
+def compute_dom_size(dom):
+    elements = dom.find_elements()
+    size = 1
+
+    if len(elements) > 1:
+        for element in elements:
+            size += compute_dom_size(element)
+
+    return size
+
 class EcoindexTest(Test):
-    def compute_dom_size(self, dom):
-        elements = dom.find_elements()
-
-        if len(elements) == 0:
-            return 1
-        else:
-            size = 1
-            for el in elements:
-                size += self.compute_dom_size(el)
-            return size
-
-    def run(self, har, dom, cpu, mem):
+    @staticmethod
+    def run(har, dom, cpu, mem):
         #param har is a dictionary with the content of the har file
         count_request = 0
         log = har['log']
@@ -24,7 +24,7 @@ class EcoindexTest(Test):
             total_size += entry['response']['headersSize'] + entry['response']['bodySize']
 
         #param dom is the information about the size of the dom
-        dom_size = self.compute_dom_size(dom)
+        dom_size = compute_dom_size(dom)
 
         #calculate the ecoindex
         #TODO fetch the average in the sql
