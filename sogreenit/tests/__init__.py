@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
-#TODO this file
 
-tests_list = []
+from sogreenit.tests.ecoindex import EcoindexTest
+
+ecoindex = EcoindexTest
+tests = []

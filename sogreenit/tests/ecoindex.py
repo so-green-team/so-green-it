@@ -1,66 +1,63 @@
 #TODO child class from test using arguments har, cpu and mem to calculate the ecoindex
 
-from test import Test
+from sogreenit.tests.test import Test
 
-class Ecoindex(Test):
-    def __init__(self):
-        tests_list.append("Ecoindex")
+def compute_dom_size(dom):
+    elements = dom.find_elements()
+    size = 1
 
-    def compute_dom_size(dom):
-        elements = dom.find_elements()
+    if len(elements) > 1:
+        for element in elements:
+            size += compute_dom_size(element)
 
-        if len(elements) == 0:
-            return 1
-        else:
-            size = 1
-            for el in elements:
-                size += compute_dom_size(el)
-            return size
+    return size
 
+class EcoindexTest(Test):
+    @staticmethod
     def run(har, dom, cpu, mem):
-
         #param har is a dictionary with the content of the har file
-        countRequest = 0
+        count_request = 0
         log = har['log']
-        countRequest = len(log['entries'])
-        totalSize = 0
+        count_request = len(log['entries'])
+        total_size = 0
         for entry in log['entries']:
-            totalSize += entry['response']['headersSize'] + entry['response']['bodySize']
+            total_size += entry['response']['headersSize'] + entry['response']['bodySize']
+
         #param dom is the information about the size of the dom
-        domSize = compute_dom_size(dom)
+        dom_size = compute_dom_size(dom)
 
         #calculate the ecoindex
-        #coeficient used for the computation
-        coef_dom = 3
-        coef_weight = 1
-        coef_req = 2
-
         #TODO fetch the average in the sql
         average_dom = 1
         average_weight = 1
         average_nbr_req = 1
 
-        #compute the difference between the averages and this analyse
-        dom_gap = (domSize / average_dom) * coef_dom
-        weight_gap = (totalSize / average_weight) * coef_weight
-        req_gap = (countRequest / average_nbr_req) * coef_req
-        ecoIndex = (dom_gap + weight_gap + req_gap) / (coef_dom + coef_weight + coef_req)
+        # Compute the difference between the averages and this analyse
+        # Coefficients for each variables are :
+        #  - 3 for DOM size
+        #  - 1 for Total Size
+        #  - 2 for the number of HTTP requests
+
+        dom_gap = 3 * (dom_size / average_dom) * 3
+        weight_gap = (total_size / average_weight)
+        req_gap = 2 * (count_request / average_nbr_req)
+        eco_index = (dom_gap + weight_gap + req_gap) / 6
 
         #attribution of a note depending of the result of ecoIndex
-        note = ""
-        if ecoIndex < 0.2:
-            note = "A"
-        elif ecoIndex < 0.5:
-            note = "B"
-        elif ecoIndex < 0.75:
-            note = "C"
-        elif ecoIndex < 1:
-            note = "D"
-        elif ecoIndex < 1.5:
-            note = "E"
-        elif ecoIndex < 2:
-            note = "F"
+        grade = None
+        if eco_index < 0.2:
+            grade = 'A'
+        elif eco_index < 0.5:
+            grade = 'B'
+        elif eco_index < 0.75:
+            grade = 'C'
+        elif eco_index < 1:
+            grade = 'D'
+        elif eco_index < 1.5:
+            grade = 'E'
+        elif eco_index < 2:
+            grade = 'F'
         else:
-            note = "G"
+            grade = 'G'
 
-        return note
+        return grade
