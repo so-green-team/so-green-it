@@ -9,6 +9,7 @@ setup(
     install_requires=[
         'flask>=0.12.2',
         'selenium',
+        'browsermob-proxy>=0.8.0',
         'psutil>=5.4.1',
         'jsonschema>=2.6.0',
         'psycopg2>=2.7',
