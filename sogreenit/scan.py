@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from datetime import date
 import os
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,7 +13,7 @@ from jsonschema import ValidationError, validate
 from browsermobproxy import Server
 from flask import request, jsonify
 
-from sogreenit.db.manager import DBConnection
+from sogreenit.db.connection import DBConnection
 from sogreenit.tests import tests, ecoindex
 from sogreenit import app, input_schema
 
@@ -60,7 +61,7 @@ browser_profile.set_preference('media.cache_size', False)
 browser_profile.set_proxy(browsermob_proxy.selenium_proxy())
 
 # DB connection
-# db = DBConnection(host=os.getenv('SOGREEN_DB_HOST'))
+db = DBConnection()
 
 @app.route('/scan', methods=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'])
 def scan_help():
@@ -159,8 +160,67 @@ def scan_static():
     # Closing browser
     driver.quit()
 
+    # Retrieving the project ID from the user parameters
+    project_id = None
+    try:
+        project_id = user_params['project']
+    except KeyError:
+        # If the project ID is not specified, we'll create a new one
+        db.make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url']))
+        project_id = db.make_request("""SELECT MAX(id) FROM projects WHERE name = %s""", (user_params['url']))[0]
+
+    # Now adding a new entry to the results in the database
+    db.make_request(
+        """INSERT INTO projects_results (date, project_id)
+        VALUES (%s, %s)""",
+        (
+            date.today(),
+            project_id
+        )
+    )
+    results_id = db.make_request(
+        """SELECT MAX(id)
+        FROM projects_results
+        WHERE project_id = %s""",
+        (
+            project_id
+        )
+    )[0]
+
+    # Registering the results of the page
+    db.make_request(
+        """INSERT INTO pages_results (date, url, ecoindex, projects_results_id)
+        VALUES (%s, %s, %s, %s)""",
+        (
+            date.today(),
+            user_params['url'],
+            grade,
+            results_id
+        )
+    )
+    page_id = db.make_request(
+        """SELECT MAX(id)
+        FROM pages_results
+        WHERE projects_results_id = %s""",
+        (
+            results_id
+        )
+    )[0]
+
+    for test_id in results:
+        db.make_request(
+            """INSERT INTO steps_results (result, bp_id, pages_results_id)
+            VALUES (%s, %s, %s)""",
+            (
+                results[test_id],
+                test_id,
+                page_id
+            )
+        )
+
     # Returning the result of the scan
     return jsonify({
+        'project': project_id,
         'url': user_params['url'],
         'ecoindex': grade,
         'results': results
