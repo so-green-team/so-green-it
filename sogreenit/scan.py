@@ -182,8 +182,8 @@ def scan_static():
         project_id = user_params['project']
     except KeyError:
         # If the project ID is not specified, we'll create a new one
-        db.make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url']))
-        project_id = db.make_request("""SELECT MAX(id) FROM projects WHERE name = %s""", (user_params['url']))[0]
+        db.make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url'],))
+        project_id = db.make_request("""SELECT MAX(id) FROM projects WHERE name = %s""", (user_params['url'],))[0]
 
     # Now adding a new entry to the results in the database
     db.make_request(
@@ -191,7 +191,7 @@ def scan_static():
         VALUES (%s, %s)""",
         (
             date.today(),
-            project_id
+            project_id,
         )
     )
     results_id = db.make_request(
@@ -199,7 +199,7 @@ def scan_static():
         FROM projects_results
         WHERE project_id = %s""",
         (
-            project_id
+            project_id,
         )
     )[0]
 
@@ -211,7 +211,7 @@ def scan_static():
             date.today(),
             user_params['url'],
             grade,
-            results_id
+            results_id,
         )
     )
     page_id = db.make_request(
@@ -219,7 +219,7 @@ def scan_static():
         FROM pages_results
         WHERE projects_results_id = %s""",
         (
-            results_id
+            results_id,
         )
     )[0]
 
@@ -230,7 +230,7 @@ def scan_static():
             (
                 results[test_id],
                 test_id,
-                page_id
+                page_id,
             )
         )
 

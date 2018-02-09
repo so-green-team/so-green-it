@@ -31,8 +31,9 @@ class DBConnection:
 
         self.__cursor = self.__con.cursor()
 
-    def make_request(self, query, parameters=()):
+    def make_request(self, query, parameters=[]):
         """Make a request to the SoGreen DB"""
         self.__cursor.execute(query, parameters)
+        self.__con.commit()
 
         return self.__cursor.fetchall()
