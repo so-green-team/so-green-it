@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import date
+import json
 import os
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -61,7 +62,22 @@ browser_profile.set_preference('media.cache_size', False)
 browser_profile.set_proxy(browsermob_proxy.selenium_proxy())
 
 # DB connection
-db = DBConnection()
+db_config = None
+if os.name == 'nt':
+    with open('{}\\config.json'.format(os.getcwd())) as config_file:
+        db_config = json.load(config_file)
+else:
+    with open('{}/config.json'.format(os.getcwd())) as config_file:
+        db_config = json.load(config_file)
+
+db = DBConnection(
+    db_type=db_config['type'],
+    host=db_config['host'],
+    port=db_config['port'],
+    db=db_config['db'],
+    user=db_config['user'],
+    passwd=db_config['passwd']
+)
 
 @app.route('/scan', methods=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'])
 def scan_help():

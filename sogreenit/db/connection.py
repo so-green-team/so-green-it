@@ -4,25 +4,18 @@
 Represents a database connection to a MySQL or a PostrgreSQL server
 """
 
-import os
-
 import MySQLdb
 import psycopg2
 
 class DBConnection:
     """Symbolize a connection to the SoGreen DB where results are stored"""
 
-    def __init__(self):
-        host = os.getenv('SOGREEN_DB_HOST', 'localhost')
-        db = os.getenv('SOGREEN_DB_NAME', 'sogreendb')
-        user = os.getenv('SOGREEN_DB_USER', 'sogreen')
-        passwd = os.getenv('SOGREEN_DB_PASSWD')
-
+    def __init__(self, db_type, host, port, db, user, passwd):
         """Initialize a new connection to the database"""
-        if os.getenv('SOGREEN_DB_TYPE', 'mysql') == 'mysql':
+        if db_type == 'mysql':
             self.__con = MySQLdb.connect(
                 host=host,
-                port=os.getenv('SOGREEN_DB_PORT', 3306),
+                port=port,
                 db=db,
                 user=user,
                 passwd=passwd
@@ -30,7 +23,7 @@ class DBConnection:
         else:
             self.__con = psycopg2.connect(
                 host=host,
-                port=os.getenv('SOGREEN_DB_PORT', 5432),
+                port=port,
                 dbname=db,
                 user=user,
                 passwd=passwd
