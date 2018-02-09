@@ -17,6 +17,7 @@ import psutil
 
 from sogreenit.db.connection import DBConnection
 from sogreenit.tests import tests, ecoindex
+from sogreenit.utils import compute_dom_size, compute_requests_weight
 from sogreenit import app, input_schema
 
 # Starting BrowserMob Proxy server
@@ -182,9 +183,6 @@ def scan_static():
         if rule_id not in excluded_rules:
             results[rule_id] = tests[rule_id].run(har, dom, cpu, mem)
 
-    # Closing browser
-    driver.quit()
-
     # Retrieving the project ID from the user parameters
     project_id = None
     try:
@@ -214,11 +212,14 @@ def scan_static():
 
     # Registering the results of the page
     db.make_request(
-        """INSERT INTO pages_results (date, url, ecoindex, projects_results_id)
-        VALUES (%s, %s, %s, %s)""",
+        """INSERT INTO pages_results (date, url, dom_size, weight, nbr_requests, ecoindex, projects_results_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
         (
             date.today(),
             user_params['url'],
+            compute_dom_size(dom),
+            compute_requests_weight(har),
+            len(har['log']['entries']),
             grade,
             results_id,
         )
@@ -242,6 +243,9 @@ def scan_static():
                 page_id,
             )
         )
+
+    # Closing browser driver
+    driver.quit()
 
     # Returning the result of the scan
     return jsonify({
