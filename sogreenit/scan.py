@@ -13,6 +13,7 @@ from selenium import webdriver
 from jsonschema import ValidationError, validate
 from browsermobproxy import Server
 from flask import request, jsonify
+import psutil
 
 from sogreenit.db.connection import DBConnection
 from sogreenit.tests import tests, ecoindex
@@ -125,6 +126,14 @@ def scan_static():
         browser_profile=browser_profile
     )
 
+    # Retrieving browser PID and process to collect memory and CPU cycles infos
+    driver_pid = max([p.pid for p in psutil.process_iter(attrs=['pid', 'name']) if 'firefox' in p.info['name']])
+    driver_process = psutil.Process(pid=driver_pid)
+    
+    # Retrieving initials data for CPU and memory
+    cpu = driver_process.cpu_times().system
+    mem = driver_process.memory_info().vms
+
     # Loading input URL
     browsermob_proxy.new_har(title=user_params['url'])
     driver.get(user_params['url'])
@@ -132,18 +141,18 @@ def scan_static():
         WebDriverWait(driver, 120).until(EC.presence_of_element_located((By.TAG_NAME, 'html')))
     except TimeoutException as err:
         raise err
+
+    # Computing CPU informations
+    cpu = int((driver_process.cpu_times().system - cpu) * (psutil.cpu_freq().max * (10 ** 6)))
+
+    # Retrieving memory informations
+    mem = driver_process.memory_info().vms - mem
     
     # Retrieving HAR content
     har = browsermob_proxy.har
 
     # Retrieving DOM from the page
     dom = driver.find_element_by_tag_name('html')
-
-    # Retrieving CPU informations
-    cpu = None # TODO
-
-    # Retrieving memory informations
-    mem = None # TODO
 
     # Computing Ecoindex grade
     grade = ecoindex.run(har=har, dom=dom, cpu=cpu, mem=mem)
