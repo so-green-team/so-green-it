@@ -3,6 +3,28 @@
 from flask import jsonify
 from sogreenit import app, db
 
+@app.route('/results', methods=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'])
+def results_help():
+    """A little help for the use of this resource"""
+    return jsonify(
+        help={
+            '/results/project/\{project_id\}': {
+                'method': 'GET',
+                'parameters': {
+                    'project_id': 'The identifiant of your project in the database of So Green IT'
+                },
+                'description': 'Retrieves all the results computed and stored by So Green IT for a given project'
+            },
+            '/results/page/\{page_id\}': {
+                'method': 'GET',
+                'parameters': {
+                    'page_id': 'The identifiant of your page in the database of So Green IT'
+                },
+                'description': 'Retrieves the results computed and stored by So Green IT of a web page'
+            }
+        }
+    )
+
 @app.route('/results/project/<int:project_id>', methods=['GET'])
 def retrieve_project_results(project_id):
     # First we retrieve all the results attached to the project
