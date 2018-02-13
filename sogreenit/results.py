@@ -8,14 +8,14 @@ def results_help():
     """A little help for the use of this resource"""
     return jsonify(
         help={
-            '/results/project/\{project_id\}': {
+            '/results/project/{project_id}': {
                 'method': 'GET',
                 'parameters': {
                     'project_id': 'The identifiant of your project in the database of So Green IT'
                 },
                 'description': 'Retrieves all the results computed and stored by So Green IT for a given project'
             },
-            '/results/page/\{page_id\}': {
+            '/results/page/{page_id}': {
                 'method': 'GET',
                 'parameters': {
                     'page_id': 'The identifiant of your page in the database of So Green IT'
