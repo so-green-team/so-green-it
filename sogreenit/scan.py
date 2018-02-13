@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from datetime import date
-import json
+from datetime import datetime
 import os
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,10 +14,9 @@ from browsermobproxy import Server
 from flask import request, jsonify
 import psutil
 
-from sogreenit.db.connection import DBConnection
 from sogreenit.tests import tests, ecoindex
 from sogreenit.utils import compute_dom_size, compute_requests_weight
-from sogreenit import app, input_schema
+from sogreenit import app, input_schema, db
 
 # Starting BrowserMob Proxy server
 browsermob_server = None
@@ -62,24 +60,6 @@ browser_profile.set_preference('dom.requestcache.enabled', False)
 browser_profile.set_preference('image.cache.size', False)
 browser_profile.set_preference('media.cache_size', False)
 browser_profile.set_proxy(browsermob_proxy.selenium_proxy())
-
-# DB connection
-db_config = None
-if os.name == 'nt':
-    with open('{}\\config.json'.format(os.getcwd())) as config_file:
-        db_config = json.load(config_file)
-else:
-    with open('{}/config.json'.format(os.getcwd())) as config_file:
-        db_config = json.load(config_file)
-
-db = DBConnection(
-    db_type=db_config['type'],
-    host=db_config['host'],
-    port=db_config['port'],
-    db=db_config['db'],
-    user=db_config['user'],
-    passwd=db_config['passwd']
-)
 
 @app.route('/scan', methods=['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'])
 def scan_help():
@@ -189,33 +169,33 @@ def scan_static():
         project_id = user_params['project']
     except KeyError:
         # If the project ID is not specified, we'll create a new one
-        db.make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url'],))
-        project_id = db.make_request("""SELECT MAX(id) FROM projects WHERE name = %s""", (user_params['url'],))[0]
+        db['connection'].make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url'],))
+        project_id = db['connection'].make_request("""SELECT MAX(id) AS id FROM projects WHERE name = %s""", (user_params['url'],))['id']
 
     # Now adding a new entry to the results in the database
-    db.make_request(
+    db['connection'].make_request(
         """INSERT INTO projects_results (date, project_id)
         VALUES (%s, %s)""",
         (
-            date.today(),
+            datetime.today(),
             project_id,
         )
     )
-    results_id = db.make_request(
-        """SELECT MAX(id)
+    results_id = db['connection'].make_request(
+        """SELECT MAX(id) AS id
         FROM projects_results
         WHERE project_id = %s""",
         (
             project_id,
         )
-    )[0]
+    )['id']
 
     # Registering the results of the page
-    db.make_request(
+    db['connection'].make_request(
         """INSERT INTO pages_results (date, url, dom_size, weight, nbr_requests, ecoindex, projects_results_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s)""",
         (
-            date.today(),
+            datetime.today(),
             user_params['url'],
             compute_dom_size(dom),
             compute_requests_weight(har),
@@ -224,17 +204,17 @@ def scan_static():
             results_id,
         )
     )
-    page_id = db.make_request(
-        """SELECT MAX(id)
+    page_id = db['connection'].make_request(
+        """SELECT MAX(id) AS id
         FROM pages_results
         WHERE projects_results_id = %s""",
         (
             results_id,
         )
-    )[0]
+    )['id']
 
     for test_id in results:
-        db.make_request(
+        db['connection'].make_request(
             """INSERT INTO steps_results (result, bp_id, pages_results_id)
             VALUES (%s, %s, %s)""",
             (
