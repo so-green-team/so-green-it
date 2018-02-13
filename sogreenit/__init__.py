@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 # pylint: skip-file
 
+from sogreenit.db.connection import DBConnection
 from flask import Flask
+import json
+import os
 
 VERSION_MAJOR = 0
 VERSION_MINOR = 1
@@ -38,6 +41,31 @@ input_schema = {
         }
     }
 }
+
+# Preparing database connection
+db = {
+    'config': None,
+    'connection': None
+}
+
+# Loading database connection configuration
+db['config'] = None
+if os.name == 'nt':
+    with open('{}\\config.json'.format(os.getcwd())) as config_file:
+        db_config = json.load(config_file)
+else:
+    with open('{}/config.json'.format(os.getcwd())) as config_file:
+        db_config = json.load(config_file)
+
+# Setting up database connection
+db['connection'] = DBConnection(
+    db_type=db_config['type'],
+    host=db_config['host'],
+    port=db_config['port'],
+    db=db_config['db'],
+    user=db_config['user'],
+    passwd=db_config['passwd']
+)
 
 import sogreenit.scan
 import sogreenit.results
