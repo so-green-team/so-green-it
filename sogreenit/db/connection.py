@@ -4,6 +4,7 @@
 Represents a database connection to a MySQL or a PostrgreSQL server
 """
 
+import MySQLdb.cursors
 import MySQLdb
 import psycopg2
 
@@ -18,7 +19,8 @@ class DBConnection:
                 port=port,
                 db=db,
                 user=user,
-                passwd=passwd
+                passwd=passwd,
+                cursorclass=MySQLdb.cursors.DictCursor
             )
         else:
             self.__con = psycopg2.connect(

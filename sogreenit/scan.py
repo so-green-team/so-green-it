@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from datetime import date
+from datetime import datetime
 import os
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -170,32 +170,32 @@ def scan_static():
     except KeyError:
         # If the project ID is not specified, we'll create a new one
         db['connection'].make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url'],))
-        project_id = db['connection'].make_request("""SELECT MAX(id) FROM projects WHERE name = %s""", (user_params['url'],))[0]
+        project_id = db['connection'].make_request("""SELECT MAX(id) AS id FROM projects WHERE name = %s""", (user_params['url'],))['id']
 
     # Now adding a new entry to the results in the database
     db['connection'].make_request(
         """INSERT INTO projects_results (date, project_id)
         VALUES (%s, %s)""",
         (
-            date.today(),
+            datetime.today(),
             project_id,
         )
     )
     results_id = db['connection'].make_request(
-        """SELECT MAX(id)
+        """SELECT MAX(id) AS id
         FROM projects_results
         WHERE project_id = %s""",
         (
             project_id,
         )
-    )[0]
+    )['id']
 
     # Registering the results of the page
     db['connection'].make_request(
         """INSERT INTO pages_results (date, url, dom_size, weight, nbr_requests, ecoindex, projects_results_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s)""",
         (
-            date.today(),
+            datetime.today(),
             user_params['url'],
             compute_dom_size(dom),
             compute_requests_weight(har),
@@ -205,13 +205,13 @@ def scan_static():
         )
     )
     page_id = db['connection'].make_request(
-        """SELECT MAX(id)
+        """SELECT MAX(id) AS id
         FROM pages_results
         WHERE projects_results_id = %s""",
         (
             results_id,
         )
-    )[0]
+    )['id']
 
     for test_id in results:
         db['connection'].make_request(
