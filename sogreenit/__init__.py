@@ -7,7 +7,7 @@ import json
 import os
 
 VERSION_MAJOR = 0
-VERSION_MINOR = 1
+VERSION_MINOR = 5
 app = Flask(__name__)
 
 input_schema = {
@@ -69,4 +69,4 @@ db['connection'] = DBConnection(
 
 import sogreenit.scan
 import sogreenit.results
-
+import sogreenit.views
