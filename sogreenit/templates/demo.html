@@ -43,33 +43,89 @@
                     <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </section>
-            <section id="results" class="alert alert-success"></section>
-            <section id="error" class="alert alert-danger"></section>
+            <section id="results" class="alert alert-success" style="display: none">
+                <template id="green-test-success">
+                    <li class="list-group-item list-group-item-success"></li>
+                </template>
+                <template id="green-test-failure">
+                    <li class="list-group-item list-group-item-danger"></li>
+                </template>
+                <h3>Your scan is complete!</h3>
+                <div class="row">
+                    <div class="col-xs-12 col-md">
+                        <h4>General informations</h4>
+                        Ecoindex Grade: <span id="grade" class="font-weight-bold"></span>
+                        <br />
+                        So Green IT project ID #<span id="output-id"></span>
+                        <br />
+                    </div>
+                    <div class="col-xs-12 col-md mt-xs-5">
+                        <h4>Green Tests results:</h4>
+                        <ul class="list-group"></ul>
+                    </div>
+                </div>
+            </section>
+            <section id="error" class="alert alert-danger" style="display: none">
+                <h3>Unable to perform your scan</h3>
+                <p>An error occured during the computation...</p>
+            </section>
         </div>
         <script>
+            function onProgress (evt) {
+                if (evt.lengthComputable) {
+                    const percent = 100 * (evt.loaded / evt.total)
+                    const progressBar = document.querySelector('div.progress > .progress-bar')
+
+                    progressBar.setAttribute('aria-valuenow', percent)
+                    progressBar.style.width = `${percent}%`
+                    progressBar.textContent = `${percent}%`
+                }
+            }
+
+            function onError (evt) {
+                document.querySelector('#progress').style.display = 'none'
+
+                const progressBar = document.querySelector('div.progress > .progress-bar')
+                progressBar.setAttribute('aria-valuenow', 0)
+                progressBar.style.width = '0%'
+                progressBar.textContent = '0%'
+            }
+
+            function refreshResults (res) {
+                const resultList = document.querySelector('ul.list-group')
+                while (resultList.firstChild) {
+                    resultList.removeChild(resultList.firstChild)
+                }
+
+                const templateResultSuccess = document.querySelector('#green-test-success')
+                const templateResultFailure = document.querySelector('#green-test-failure')
+
+                for (const bp in res.results) {
+                    if (res.results[bp]) {
+                        templateResultSuccess.content.querySelector('li').textContent = `Test #${bp}`
+                        resultList.appendChild(document.importNode(templateResultSuccess.content, true))
+                    } else {
+                        templateResultFailure.content.querySelector('li').textContent = `Test #${bp}`
+                        resultList.appendChild(document.importNode(templateResultFailure.content, true))
+                    }
+                }
+
+                document.querySelector('#grade').textContent = res.ecoindex
+                document.querySelector('#output-id').textContent = res.project
+                document.querySelector('#results').style.display = 'block'
+            }
+    
             document.querySelector('form').addEventListener('submit', function (evt) {
                 evt.preventDefault()
+
+                document.querySelector('#progress').style.display = 'block'
+                document.querySelector('#results').style.display = 'none'
+                document.querySelector('#error').style.display = 'none'
                 
                 const req = new XMLHttpRequest()
 
-                req.addEventListener('progress', (evt) => {
-                    if (evt.lengthComputable) {
-                        const percent = 100 * (evt.loaded / evt.total)
-                        const progressBar = document.querySelector('div.progress > .progress-bar')
-
-                        progressBar.setAttribute('aria-valuenow', percent)
-                        progressBar.style.width = `${percent}%`
-                        progressBar.textContent = `${percent}%`
-                    }
-                })
-                req.addEventListener('error', function (evt) {
-                    document.querySelector('#progress').style.display = 'none'
-
-                    const progressBar = document.querySelector('div.progress > .progress-bar')
-                    progressBar.setAttribute('aria-valuenow', 0)
-                    progressBar.style.width = '0%'
-                    progressBar.textContent = '0%'
-                })
+                req.addEventListener('progress', onProgress)
+                req.addEventListener('error', onError)
                 req.addEventListener('load', function (evt) {
                     document.querySelector('#progress').style.display = 'none'
                     
@@ -79,16 +135,15 @@
                     progressBar.textContent = '0%'
                     
                     if (this.status === 200) {
-                        console.log('success')
+                        refreshResults(JSON.parse(this.response))
                     } else {
-                        console.log('error')
+                        document.querySelector('#error').style.display = 'block'
                     }
                 })
 
                 req.open('POST', '/scan/static', true)
                 req.setRequestHeader('Content-Type', 'application/json')
-                document.querySelector('#progress').style.display = 'block'
-                
+
                 const id = parseInt(document.querySelector('#project-id').value)
                 if (!isNaN(id)) {
                     req.send(JSON.stringify({
