@@ -170,7 +170,7 @@ def scan_static():
     except KeyError:
         # If the project ID is not specified, we'll create a new one
         db['connection'].make_request("""INSERT INTO projects (name) VALUES (%s)""", (user_params['url'],))
-        project_id = db['connection'].make_request("""SELECT MAX(id) AS id FROM projects WHERE name = %s""", (user_params['url'],))['id']
+        project_id = db['connection'].make_request("""SELECT MAX(id) AS id FROM projects WHERE name = %s""", (user_params['url'],))[0]['id']
 
     # Now adding a new entry to the results in the database
     db['connection'].make_request(
@@ -188,7 +188,7 @@ def scan_static():
         (
             project_id,
         )
-    )['id']
+    )[0]['id']
 
     # Registering the results of the page
     db['connection'].make_request(
@@ -211,7 +211,7 @@ def scan_static():
         (
             results_id,
         )
-    )['id']
+    )[0]['id']
 
     for test_id in results:
         db['connection'].make_request(
