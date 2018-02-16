@@ -3,7 +3,7 @@
 from sogreenit.tests.test import Test
 from sogreenit.utils import compute_dom_size
 from sogreenit.utils import compute_requests_weight
-
+from sogreenit import db
 
 class EcoindexTest(Test):
     @staticmethod
@@ -20,9 +20,10 @@ class EcoindexTest(Test):
 
         #calculate the ecoindex
         #TODO fetch the average in the sql
-        average_dom = 1
-        average_weight = 1
-        average_nbr_req = 1
+        averages = db['connection'].make_request(
+            """SELECT AVG(dom_size) AS average_dom_size, AVG(weight) AS average_weight, AVG(nbr_requests) AS average_nbr_requests
+            FROM pages_results"""
+        )[0]
 
         # Compute the difference between the averages and this analyse
         # Coefficients for each variables are :
@@ -30,9 +31,9 @@ class EcoindexTest(Test):
         #  - 1 for Total weight
         #  - 2 for the number of HTTP requests
 
-        dom_gap = 3 * (dom_size / average_dom) * 3
-        weight_gap = (total_weight / average_weight)
-        req_gap = 2 * (count_request / average_nbr_req)
+        dom_gap = 3 * (dom_size / averages['average_dom']) * 3
+        weight_gap = (total_weight / averages['average_weight'])
+        req_gap = 2 * (count_request / averages['average_nbr_req'])
         eco_index = (dom_gap + weight_gap + req_gap) / 6
 
         #attribution of a note depending of the result of ecoIndex
