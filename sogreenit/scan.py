@@ -148,9 +148,9 @@ def scan_static():
         if type(user_params['includeRules']) is list and len(user_params['includeRules']) > 0:
             rules_set = user_params['includeRules']
         else:
-            rules_set = range(len(tests))
+            rules_set = tests.keys()
     except KeyError:
-        rules_set = range(len(tests))
+        rules_set = tests.keys()
 
     # Retrieving excluded rules
     try:
