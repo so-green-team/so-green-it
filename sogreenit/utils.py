@@ -8,14 +8,19 @@ def compute_dom_size(dom):
     """
     Computes the number of elements in a DOM document
     """
-    elements = dom.find_elements_by_css_selector('*')
-    size = 1
+    # Weird things happens with this algorithm when it's used with Selenium API
+    # So, we just go with an estimation based on the root element of the DOM document
 
-    if len(elements) > 1:
-        for element in elements:
-            size += compute_dom_size(element)
+    #elements = dom.find_elements_by_xpath('.//*')
+    #size = 1
+    
+    #print(len(elements))
+    #if len(elements) > 0:
+    #    for element in elements:
+    #        size += compute_dom_size(element)
 
-    return size
+    #return size
+    return len(dom.find_elements_by_css_selector('*'))
 
 def compute_requests_weight(har):
     """
