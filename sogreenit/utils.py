@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Utilities function to compute DOM size and page weight
 """
@@ -6,7 +8,7 @@ def compute_dom_size(dom):
     """
     Computes the number of elements in a DOM document
     """
-    elements = dom.find_elements()
+    elements = dom.find_elements_by_css_selector('*')
     size = 1
 
     if len(elements) > 1:
