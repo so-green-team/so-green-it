@@ -25,6 +25,10 @@ class EcoindexTest(Test):
             FROM pages_results"""
         )[0]
 
+        if averages['average_dom_size'] is None:
+            for key in averages:
+                averages[key] = 1
+
         # Compute the difference between the averages and this analyse
         # Coefficients for each variables are :
         #  - 3 for DOM size
