@@ -69,7 +69,4 @@ db['connection'] = DBConnection(
 
 import sogreenit.scan
 import sogreenit.results
-<<<<<<< HEAD
 import sogreenit.views
-=======
->>>>>>> develop
