@@ -52,21 +52,20 @@ db = {
 db['config'] = None
 if os.name == 'nt':
     with open('{}\\config.json'.format(os.getcwd())) as config_file:
-        db_config = json.load(config_file)
+        db['config'] = json.load(config_file)
 else:
     with open('{}/config.json'.format(os.getcwd())) as config_file:
-        db_config = json.load(config_file)
+        db['config'] = json.load(config_file)
 
 # Setting up database connection
 db['connection'] = DBConnection(
-    db_type=db_config['type'],
-    host=db_config['host'],
-    port=db_config['port'],
-    db=db_config['db'],
-    user=db_config['user'],
-    passwd=db_config['passwd']
+    db_type=db['config']['type'],
+    host=db['config']['host'],
+    port=db['config']['port'],
+    db=db['config']['db'],
+    user=db['config']['user'],
+    passwd=db['config']['passwd']
 )
 
 import sogreenit.scan
 import sogreenit.results
-
