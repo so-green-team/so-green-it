@@ -27,10 +27,6 @@
                         <input type="url" class="form-control" id="url" placeholder="Enter the URL of the page you would like to test" required />
                         <small class="form-text text-muted">It's the URL of the hosted web page that you want to test</small>
                     </div>
-                    <hr />
-                    <h3>Green Tests</h3>
-                    <div class="form-group">
-                    </div>
                     <button type="submit" id="btn-run" class="btn btn-primary">Run!</button>
                 </form>
             </section>
@@ -72,13 +68,18 @@
         </div>
         <script>
             function onProgress (evt) {
+                const progressBar = document.querySelector('div.progress > .progress-bar')
+
                 if (evt.lengthComputable) {
                     const percent = 100 * (evt.loaded / evt.total)
-                    const progressBar = document.querySelector('div.progress > .progress-bar')
 
                     progressBar.setAttribute('aria-valuenow', percent)
                     progressBar.style.width = `${percent}%`
                     progressBar.textContent = `${percent}%`
+                } else {
+                    progressBar.setAttribute('aria-valuenow', 100)
+                    progressBar.style.width = '100%'
+                    progressBar.textContent = '100%'
                 }
             }
 
