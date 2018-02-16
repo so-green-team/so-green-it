@@ -10,7 +10,7 @@
             "format": "uri"
         },
         "project": {
-            "type": "string"
+            "type": "integer"
         },
         "includeRules": {
             "type": "array",
