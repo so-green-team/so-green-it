@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Utilities function to compute DOM size and page weight
 """
