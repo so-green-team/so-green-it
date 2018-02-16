@@ -31,9 +31,9 @@ class EcoindexTest(Test):
         #  - 1 for Total weight
         #  - 2 for the number of HTTP requests
 
-        dom_gap = 3 * (dom_size / averages['average_dom']) * 3
+        dom_gap = 3 * (dom_size / averages['average_dom_size']) * 3
         weight_gap = (total_weight / averages['average_weight'])
-        req_gap = 2 * (count_request / averages['average_nbr_req'])
+        req_gap = 2 * (count_request / averages['average_nbr_requests'])
         eco_index = (dom_gap + weight_gap + req_gap) / 6
 
         #attribution of a note depending of the result of ecoIndex
